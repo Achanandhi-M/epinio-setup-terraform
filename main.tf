@@ -9,33 +9,40 @@ provider "kubectl" {
 }
 
 // ingress
+
 resource "helm_release" "ingress" {
   name       = "nginx-ingress"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "nginx-ingress-controller"
   version    = "11.3.18"
-  timeout    = 600
+  timeout    = 1300
 }
 
 // cert manager
+
 resource "helm_release" "cert_manager" {
   name       = "cert-manager"
   repository = "https://charts.bitnami.com/bitnami"
   chart      = "cert-manager"
   version    = "1.3.16"
   namespace  = "cert-manager"
+
   set {
     name  = "installCRDs"
-    value = true
+    value =  true
   }
-  timeout          = 600
+
+  timeout          = 800
   create_namespace = true
 }
 
 // certificate issuer
+
 resource "kubectl_manifest" "cluster_issuer" {
-  yaml_body  = templatefile("${path.module}/cert-issuer.yaml.tpl", { email = var.email })
-  depends_on = [helm_release.cert_manager]
+  yaml_body = templatefile("${path.module}/cert-issuer.yaml.tpl", { email = var.email })
+  depends_on = [
+    helm_release.cert_manager,
+  ]
 }
 
 // epinio
@@ -53,7 +60,6 @@ resource "helm_release" "epinio" {
     name  = "global.domain"
     value = var.global_domain
   }
-
   set {
     name  = "global.tlsIssuer"
     value = "letsencrypt-prod"
@@ -67,6 +73,10 @@ resource "helm_release" "epinio" {
   set {
     name  = "ingress.ingressClassName"
     value = "nginx"
+  }
+  set {
+    name  = "epinioUI.enabled"
+    value = true
   }
 
 }

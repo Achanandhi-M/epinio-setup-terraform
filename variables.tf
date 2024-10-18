@@ -7,3 +7,4 @@ variable "global_domain" {
   description = "Global domain for Epinio"
   type        = string
 }
+
